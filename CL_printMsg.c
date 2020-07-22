@@ -141,6 +141,27 @@ void CL_printMsg(char *msg, ...)
 	}
 #endif // USING G4
 
+
+#ifdef CL_USING_L0
+void CL_printMsg(char *msg, ...)
+{	
+	char buff[80];	
+	va_list args;
+	va_start(args, msg);
+	vsprintf(buff, msg, args);
+		
+	for (int i = 0; i < strlen(buff); i++)
+	{
+		
+		USART2->TDR = buff[i];
+		while (!(USART2->ISR & USART_ISR_TXE)) ;
+	}		
+		
+	while (!(USART2->ISR & USART_ISR_TC)) ;		
+}
+
+#endif
+
 //***************************************************************
 //						Univeral Print functions
 //***************************************************************

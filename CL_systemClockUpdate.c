@@ -154,3 +154,37 @@ void setSysClockTo72(void)
  
 }
 #endif
+
+#ifdef CL_USING_L0
+
+void setClockTo32Mhz(void)
+{
+	//adjust flash latency
+	//REG_VAL = FLASH->ACR;
+	FLASH->ACR |= FLASH_ACR_LATENCY;
+	while ((FLASH->ACR & FLASH_ACR_LATENCY) == 0) ; //wait for latency set flag
+
+	//set voltage scaling to range 1
+	PWR->CR |= PWR_CR_VOS_0;
+	PWR->CR &= ~(PWR_CR_VOS_1);
+	while (((PWR->CSR) & (PWR_CSR_VOSF)) == 1) ; //wait for voltage to settle
+
+	//turn on HSE external, HSE bypass and security
+	RCC->CR |= RCC_CR_CSSHSEON | RCC_CR_HSEBYP |  RCC_CR_HSEON;
+	while (((RCC->CR) & RCC_CR_HSERDY) == 0) ; //wait for the HSE to be ready
+
+	//reset and configure pll mull and div settings, and PLL source
+	RCC->CFGR = ((RCC->CFGR & ~(RCC_CFGR_PLLDIV | RCC_CFGR_PLLMUL)) | RCC_CFGR_PLLDIV2 | RCC_CFGR_PLLMUL8 | RCC_CFGR_PLLSRC_HSE);
+	while ((RCC->CR & RCC_CR_PLLRDY) == 1) ;
+
+	//turn on PLL , wait for ready
+	RCC->CR |= RCC_CR_PLLON;
+	while (((RCC->CR) & RCC_CR_PLLRDY) == 0) ; // wait for pll to ready
+
+	//set PLL as system clock
+	RCC->CFGR |= RCC_CFGR_SW_PLL;
+	while (((RCC->CFGR)&(RCC_CFGR_SWS_PLL)) != RCC_CFGR_SWS_PLL) ;
+	SystemCoreClockUpdate();
+}//-------------------------------------------------------------------
+
+#endif

@@ -49,7 +49,13 @@
 
 
 #endif
+#ifdef CL_USING_L0
 
+#include "stm32l0xx.h"
+
+
+#endif
+#ifndef CL_USING_L0
 typedef struct //user structure to set custom uart
 {
 USART_TypeDef*  Uart_instance;
@@ -61,6 +67,20 @@ USART_TypeDef*  Uart_instance;
 
 }printMsg_config_Type;
 
+#endif#ifdef CL_USING_L0
+typedef struct //user structure to set custom uart
+{
+	USART_TypeDef*  Uart_instance;
+	GPIO_TypeDef*   tx_port;
+	uint8_t 		TX_pin;
+	uint8_t			RX_pin;
+	uint16_t 		baud;
+	bool			FullDuplex;
+
+}printMsg_config_Type;
+
+
+#endif
 
 
 void CL_printMsg_init_Default(bool fullDuplex); //defaults to USART1 TX only on PA9 @9600

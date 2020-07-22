@@ -41,3 +41,11 @@ void setSysClockTo72(void);
 
 #endif
 
+
+/***********************| STM32F103C |*************************/
+#ifdef CL_USING_L0
+
+#include "stm32l0xx.h"
+void setClockTo32Mhz(void);
+#endif
+
