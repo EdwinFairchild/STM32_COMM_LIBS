@@ -2,6 +2,10 @@
 #define CL_CONFIG_H_
 
 
+//will output a message on UART when each lib is complete setting up
+//will add more functionality like exceptions and waring on erorr , eventually
+#define USE_CL_DEBUG  
+
 /********************|        MICROCONTROLER  SELECTION      |***********************
  *                                                                                  *
  *          CL_CONFIG.h                                                             *
@@ -51,8 +55,8 @@
  *
  **/
 /***********  Select which timer to use by uncommenting it */
-//#define CL_DELAY_USE_TIM2
-#define CL_DELAY_USE_TIM3
+#define CL_DELAY_USE_TIM2
+//#define CL_DELAY_USE_TIM3
 //#define CL_DELAY_USE_TIM4
 
 /*********** Select uses LL to init timer */

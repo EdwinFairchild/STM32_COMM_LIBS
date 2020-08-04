@@ -157,6 +157,77 @@ uint32_t CL_delayTicks = 0x00000000;
 #endif // End USING_F1
 
 
+//***************************************************************
+//						F1 related defines / macros / functions
+//***************************************************************
+#ifdef CL_USING_L0
+#ifdef CL_DELAY_USE_TIM2
+#define TIMER TIM2
+#define enableTIMER()  (RCC->APB1ENR |= (RCC_APB1ENR_TIM2EN))
+#define enableIRQ()		(NVIC_EnableIRQ(TIM2_IRQn))
+#endif
+
+#ifdef  CL_DELAY_USE_TIM3 //there is no TIM3 in L031K6
+#define TIMER TIM2
+#define enableTIMER()  (RCC->APB1ENR |= RCC_APB1ENR_TIM2EN)
+#define enableIRQ()		(NVIC_EnableIRQ(TIM2_IRQn))
+#endif
+
+
+	//***************************************************************
+	//						Init functions
+	//***************************************************************
+#ifdef CL_delay_USE_LL
+	void CL_delay_init() //supports General Purpose TImers 2 only
+{
+	
+	enableTIMER()
+	enableIRQ();
+	
+	LL_TIM_InitTypeDef myTIM; 
+	LL_TIM_StructInit(&myTIM);
+		
+#ifdef CL_DELAY_US_ENABLE
+	
+	myTIM.Autoreload  = 1000;
+	myTIM.Prescaler = 170;
+	
+#else
+
+	myTIM.Autoreload  = 1000;
+	//uint32_t  temp  = (SystemCoreClock / 1000000);
+	myTIM.Prescaler = (SystemCoreClock / 1000000);
+	
+#endif
+	
+	LL_TIM_SetUpdateSource(TIMER, LL_TIM_UPDATESOURCE_COUNTER);       //update even will only be set by over/undeflow of counter
+	LL_TIM_EnableIT_UPDATE(TIMER);
+	//	LL_TIM_GenerateEvent_UPDATE(TIMER);	
+	LL_TIM_Init(TIMER, &myTIM);
+}	
+
+#else //if not using LL
+
+void CL_delay_init() //supports General Purpose TImers 2,3,4,
+{
+	enableIRQ();
+	enableTIMER();
+	
+#ifdef CL_DELAY_US_ENABLE //change prescaler for micro second delay	
+	//@@@@@@@@ NEED calculaiting 
+	TIMER->ARR = 170;
+	TIMER->PSC = 170;
+#else
+	TIMER->PSC = (SystemCoreClock / 1000000);
+	TIMER->ARR = 1000;
+#endif
+	TIMER->CR1 |= TIM_CR1_URS;
+	TIMER->DIER |= TIM_DIER_UIE;
+	//TIMER->EGR |= TIM_EGR_UG;  
+}	
+#endif //CL_delay_USE_LL
+	
+#endif // End USING_F1
 
 //***************************************************************
 //						Universal Delay functions

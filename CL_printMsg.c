@@ -142,7 +142,41 @@ void CL_printMsg(char *msg, ...)
 #endif // USING G4
 
 
+
+//***************************************************************
+//						L0 init functions
+//***************************************************************
 #ifdef CL_USING_L0
+	// initialize using custom UART
+	void CL_printMsg_init(printMsg_config_Type config)
+{
+	
+}
+	
+//initialize using default UART1 on PA9 
+void CL_printMsg_init_Default(bool fullDuplex)
+{
+	//enable  clock  needed for uart gpio aswell as uart itself
+	RCC->IOPENR |= RCC_IOPENR_GPIOAEN;
+	RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+
+	// PA2 and PA15 to Alternate Function Mode
+	GPIOA->MODER = (GPIOA->MODER & ~(GPIO_MODER_MODE2_0))
+	| (GPIO_MODER_MODE2_1);
+
+	GPIOA->MODER = (GPIOA->MODER & ~(GPIO_MODER_MODE15_0))
+	| (GPIO_MODER_MODE15_1);
+
+	//Select the specific Alternate function
+	GPIOA->AFR[0] |= 4 << GPIO_AFRL_AFSEL2_Pos;
+	GPIOA->AFR[1] |= 4 << GPIO_AFRH_AFSEL15_Pos;
+
+	// Baudrate = clk_Frq / BRR ===>  32Mhz / 9600 = 
+	USART2->BRR = 0xD05;// 320000 / 96; 
+	;    //160000 / 96;
+	// Enable RX_NE interrupt and TXE interrupt, enable UART, RECEIVE , TRANSMIT COMPLETE
+	USART2->CR1 = USART_CR1_TE | USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE	| USART_CR1_TCIE;
+}
 void CL_printMsg(char *msg, ...)
 {	
 	char buff[80];	
@@ -159,8 +193,9 @@ void CL_printMsg(char *msg, ...)
 		
 	while (!(USART2->ISR & USART_ISR_TC)) ;		
 }
+#endif // USING L0
 
-#endif
+
 
 //***************************************************************
 //						Univeral Print functions
