@@ -91,17 +91,17 @@ void CL_printMsg(char *msg, ...)
 	
 	}
 	
-	//initialize using default UART1 on PA9 
+	//initialize using default UART2 on PA2 
 	void CL_printMsg_init_Default(bool fullDuplex)
 	{
 		//clocks
-		RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+		RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
 		RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
 		//gpio
-		GPIOA->MODER &= ~(GPIO_MODER_MODE9);   
-		GPIOA->MODER |= GPIO_MODER_MODE9_1; // 0b10 = AF mode
-		GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR9_1;
-		GPIOA->AFR[1] |= 0x07<<GPIO_AFRH_AFSEL9_Pos;	
+		GPIOA->MODER &= ~(GPIO_MODER_MODE2);   
+		GPIOA->MODER |= GPIO_MODER_MODE2_1; // 0b10 = AF mode
+		GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR2_1;
+		GPIOA->AFR[0] |= 0x07<<GPIO_AFRL_AFSEL2_Pos;	
 	
 		//uart
 		/* if over sampling by 16 then :
@@ -110,7 +110,7 @@ void CL_printMsg(char *msg, ...)
 		 * must be called after all clocks have been setup 
 		 * so that SystemCoreClock has proper value
 		 */
-		USART1->BRR = (uint32_t)(SystemCoreClock / 115200);
+		USART2->BRR = (uint32_t)(SystemCoreClock / 115200);
 	
 		if(fullDuplex)
 		{
@@ -121,7 +121,7 @@ void CL_printMsg(char *msg, ...)
 			USART1->CR1 |= USART_CR1_RE;
 		}
 	
-		USART1->CR1 |= USART_CR1_TE | USART_CR1_UE;	
+		USART2->CR1 |= USART_CR1_TE | USART_CR1_UE;	
 	}
 	void CL_printMsg(char *msg, ...)
 	{	
@@ -133,11 +133,11 @@ void CL_printMsg(char *msg, ...)
 		for (int i = 0; i < strlen(buff); i++)
 		{
 		
-			USART1->TDR = buff[i];
-			while (!(USART1->ISR & USART_ISR_TXE)) ;
+			USART2->TDR = buff[i];
+			while (!(USART2->ISR & USART_ISR_TXE)) ;
 		}		
 		
-		while (!(USART1->ISR & USART_ISR_TC)) ;		
+		while (!(USART2->ISR & USART_ISR_TC)) ;		
 	}
 #endif // USING G4
 

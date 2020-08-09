@@ -67,7 +67,8 @@ USART_TypeDef*  Uart_instance;
 
 }printMsg_config_Type;
 
-#endif#ifdef CL_USING_L0
+#endif
+#ifdef CL_USING_L0
 typedef struct //user structure to set custom uart
 {
 	USART_TypeDef*  Uart_instance;
