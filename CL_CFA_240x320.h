@@ -99,7 +99,19 @@
 #include "CL_CFA_240x320_CONFIG.h"
 #include "font-ascii-12x16.h"
 #include <stdint.h>
+#include "stdio.h"
+#include "stdlib.h"
+#include "stdarg.h"
+#include "string.h"
 
+#define mSwap(a, b, t) \
+	{                  \
+		t = a;         \
+		a = b;         \
+		b = t;         \
+	}
+
+#define F12CENTREX(a) ((240-((a)*13))/2) /*center text*/
 
 
 #define TOUCH_I2C_ADDR 0x55
@@ -119,7 +131,105 @@
 #define Y_COORD_H_BMSK 0x7
 
 
+//==============================================================================
+// Defines for the ST7789 registers.
+// ref: https://www.crystalfontz.com/controllers/Sitronix/ST7789V/
+#define ST7789_00_NOP (0x00)
+#define ST7789_01_SWRESET (0x01)
+#define ST7789_04_RDDID (0x04)
+#define ST7789_09_RDDST (0x09)
+#define ST7789_0A_RDDPM (0x0A)
+#define ST7789_0B_RDDMADCTL (0x0B)
+#define ST7789_0C_RDDCOLMOD (0x0C)
+#define ST7789_0D_RDDIM (0x0D)
+#define ST7789_0E_RDDSM (0x0E)
+#define ST7789_0F_RDDSDR (0x0F)
+#define ST7789_10_SLPIN (0x10)
+#define ST7789_11_SLPOUT (0x11)
+#define ST7789_12_PTLON (0x12)
+#define ST7789_13_NORON (0x13)
+#define ST7789_20_INVOFF (0x20)
+#define ST7789_21_INVON (0x21)
+#define ST7789_26_GAMSET (0x26)
+#define ST7789_28_DISPOFF (0x28)
+#define ST7789_29_DISPON (0x29)
+#define ST7789_2A_CASET (0x2A)
+#define ST7789_2B_RASET (0x2B)
+#define ST7789_2C_RAMWR (0x2C)
+#define ST7789_2E_RAMRD (0x2E)
+#define ST7789_30_PTLAR (0x30)
+#define ST7789_33_VSCRDEF (0x33)
+#define ST7789_34_TEOFF (0x34)
+#define ST7789_35_TEON (0x35)
+#define ST7789_36_MADCTL (0x36)
+#define ST7789_37_VSCRSADD (0x37)
+#define ST7789_38_IDMOFF (0x38)
+#define ST7789_39_IDMON (0x39)
+#define ST7789_3A_COLMOD (0x3A)
+#define ST7789_3C_RAMWRC (0x3C)
+#define ST7789_3E_RAMRDC (0x3E)
+#define ST7789_44_TESCAN (0x44)
+#define ST7789_45_RDTESCAN (0x45)
+#define ST7789_51_WRDISBV (0x51)
+#define ST7789_52_RDDISBV (0x52)
+#define ST7789_53_WRCTRLD (0x53)
+#define ST7789_54_RDCTRLD (0x54)
+#define ST7789_55_WRCACE (0x55)
+#define ST7789_56_RDCABC (0x56)
+#define ST7789_5E_WRCABCMB (0x5E)
+#define ST7789_5F_RDCABCMB (0x5F)
+#define ST7789_68_RDABCSDR (0x68)
+#define ST7789_B0_RAMCTRL (0xB0)
+#define ST7789_B1_RGBCTRL (0xB1)
+#define ST7789_B2_PORCTRL (0xB2)
+#define ST7789_B3_FRCTRL1 (0xB3)
+#define ST7789_B7_GCTRL (0xB7)
+#define ST7789_BA_DGMEN (0xBA)
+#define ST7789_BB_VCOMS (0xBB)
+#define ST7789_C0_LCMCTRL (0xC0)
+#define ST7789_C1_IDSET (0xC1)
+#define ST7789_C2_VDVVRHEN (0xC2)
+#define ST7789_C3_VRHS (0xC3)
+#define ST7789_C4_VDVSET (0xC4)
+#define ST7789_C5_VCMOFSET (0xC5)
+#define ST7789_C6_FRCTR2 (0xC6)
+#define ST7789_C7_CABCCTRL (0xC7)
+#define ST7789_C8_REGSEL1 (0xC8)
+#define ST7789_CA_REGSEL2 (0xCA)
+#define ST7789_CC_PWMFRSEL (0xCC)
+#define ST7789_D0_PWCTRL1 (0xD0)
+#define ST7789_D2_VAPVANEN (0xD2)
+#define ST7789_DA_RDID1 (0xDA)
+#define ST7789_DB_RDID2 (0xDB)
+#define ST7789_DC_RDID3 (0xDC)
+#define ST7789_DF_CMD2EN (0xDF)
+#define ST7789_E0_PVGAMCTRL (0xE0)
+#define ST7789_E1_NVGAMCTRL (0xE1)
+#define ST7789_E2_DGMLUTR (0xE2)
+#define ST7789_E3_DGMLUTB (0xE3)
+#define ST7789_E4_GATECTRL (0xE4)
+#define ST7789_E8_PWCTRL2 (0xE8)
+#define ST7789_E9_EQCTRL (0xE9)
+#define ST7789_EC_PROMCTRL (0xEC)
+#define ST7789_FA_PROMEN (0xFA)
+#define ST7789_FC_NVMSET (0xFC)
+#define ST7789_FE_PROMACT (0xFE)
 
 
+//--------------| Prototypes
+
+void F12x16__printMsg(uint16_t x, uint16_t y, char *msg, ...);
+void F12x16_DrawString(uint16_t x, uint16_t y, const char* text);
+void F12x16_DrawChar(uint16_t x, uint16_t y, char c);
+void SPI_send_pixels(uint8_t len, uint8_t* data);
+void LCD_Line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint8_t r, uint8_t g, uint8_t b);
+void Fast_Horizontal_Line(uint16_t x0, uint16_t y, uint16_t x1, uint8_t r, uint8_t g, uint8_t b);
+void LCD_Circle(uint16_t x0, uint16_t y0, uint16_t radius, uint16_t R, uint16_t G, uint16_t B);
+void Put_Pixel(uint16_t x, uint16_t y, uint8_t R, uint8_t G, uint8_t B);
+void Fill_LCD(uint8_t R, uint8_t G, uint8_t B);
+void Set_LCD_for_write_at_X_Y(uint16_t x, uint16_t y);
+void Initialize_LCD(void);
+void SPI_sendCommand(uint8_t cmd);
+void SPI_sendData(uint8_t data);
 
 #endif //End of header #if

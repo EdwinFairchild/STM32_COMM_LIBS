@@ -81,10 +81,12 @@
 		RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLR);      	// 2	
 		RCC->PLLCFGR |= RCC_PLLCFGR_PLLREN;      	// 3	
 		RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM);      // 4	
-		//RCC->PLLCFGR |= RCC_PLLCFGR_PLLM_0; //PLL-M div by 2 for 170 MHZ, comment out for div by 1
-	
+		
 		//85 for 170 ; 20 for 80
+		//RCC->PLLCFGR |= RCC_PLLCFGR_PLLM_0; //PLL-M div by 2 for 170 MHZ, comment out for div by 1		
 		RCC->PLLCFGR |= (20 << RCC_PLLCFGR_PLLN_Pos);   // 5 
+		
+		
 		RCC->PLLCFGR |= RCC_PLLCFGR_PLLSRC_HSE;      			//6	
 	
 		RCC->CR |= RCC_CR_PLLON;       //7
@@ -108,7 +110,7 @@
 
 #ifdef CL_USING_F1
 
-void setSysClockTo72(void)
+void CL_setSysClockTo72(void)
 {
 
 

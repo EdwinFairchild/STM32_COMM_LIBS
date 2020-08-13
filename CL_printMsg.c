@@ -59,7 +59,8 @@ void CL_printMsg_init_Default(bool fullDuplex)
 	GPIOA->CRH &= GPIO_CRH_CNF9;
 	GPIOA->CRH |= GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9;
 	
-	USART1->BRR = 0x1d4C;    //ill figure out how to get clock freq. so that this doesnt have to be hard coded
+	//0x271 = 115200   0x1d4c = 9600
+	USART1->BRR = 0x271; //0x1d4C;    //ill figure out how to get clock freq. so that this doesnt have to be hard coded
 	USART1->CR1 |=  USART_CR1_TE;
 	USART1->CR1 |= USART_CR1_UE;
 }

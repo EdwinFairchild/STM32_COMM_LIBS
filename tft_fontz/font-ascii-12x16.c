@@ -1,6 +1,6 @@
 
 #include "font-ascii-12x16.h"
-
+#define FONT_ASCII_12X16_FULL
 const  unsigned char Font_ASCII_12X16[] =
 {
 #ifdef FONT_ASCII_12X16_FULL

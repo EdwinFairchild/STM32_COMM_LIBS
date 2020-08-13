@@ -32,7 +32,7 @@ void CL_setSysClockTo80(void);
 	#endif
 
 //f1 specific functions
-void setSysClockTo72(void);
+void CL_setSysClockTo72(void);
 
 #endif
 /**************************************************************/
