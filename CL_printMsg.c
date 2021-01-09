@@ -196,6 +196,59 @@ void CL_printMsg(char *msg, ...)
 }
 #endif // USING L0
 
+#ifdef CL_USING_F4
+#include <stm32f4xx_ll_gpio.h>
+#include <stm32f4xx_ll_usart.h>
+#include <stm32f4xx_ll_bus.h>
+void CL_printMsg_init_Default(bool fullDuplex)
+{
+
+	LL_USART_InitTypeDef USART_InitStruct = { 0 };
+
+	LL_GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+
+	/* Peripheral clock enable */
+	LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
+
+	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+	/**USART1 GPIO Configuration  
+	PA9   ------> USART1_TX
+	PA10   ------> USART1_RX 
+	*/
+	LL_GPIO_StructInit(&GPIO_InitStruct);
+	GPIO_InitStruct.Pin = LL_GPIO_PIN_9;
+	GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+	GPIO_InitStruct.Alternate = LL_GPIO_AF_7;
+	LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	/* USER CODE BEGIN USART1_Init 1 */
+
+	/* USER CODE END USART1_Init 1 */
+	LL_USART_StructInit(&USART_InitStruct);
+	USART_InitStruct.BaudRate = 115200;
+	USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX;
+	LL_USART_Init(USART1, &USART_InitStruct);
+	LL_USART_ConfigAsyncMode(USART1);
+	USART1->BRR = 0x30D;
+	LL_USART_Enable(USART1);
+}//--------------------------------------------------------------------------------
+void CL_printMsg(char *msg, ...)
+{	
+	char buff[150];	
+	va_list args;
+	va_start(args, msg);
+	vsprintf(buff, msg, args);
+		
+	for (int i = 0; i < strlen(buff); i++)
+	{
+		
+		USART1->DR = buff[i];
+		while (!(USART1->SR & USART_SR_TXE)) ;
+	}		
+	while (!(USART1->SR & USART_SR_TC)) ;		
+		
+}
+#endif
 
 
 //***************************************************************

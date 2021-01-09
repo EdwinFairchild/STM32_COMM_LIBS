@@ -19,6 +19,7 @@
  * 
  *
  **/
+#include "CL_CONFIG.h" 
 #ifdef CL_USING_G4 //--------------------------  USING G4
 
 #include "stm32g4xx.h"

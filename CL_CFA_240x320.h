@@ -113,7 +113,7 @@
 
 #define F12CENTREX(a) ((240-((a)*13))/2) /*center text*/
 
-
+//-------------------------| TOUCH Controller
 #define TOUCH_I2C_ADDR 0x55
 #define SITRONIX_MAX_SUPPORTED_POINT 8
 
@@ -231,5 +231,5 @@ void Set_LCD_for_write_at_X_Y(uint16_t x, uint16_t y);
 void Initialize_LCD(void);
 void SPI_sendCommand(uint8_t cmd);
 void SPI_sendData(uint8_t data);
-
+void uGui_set_pixel(uint16_t x, uint16_t y, uint32_t color);
 #endif //End of header #if

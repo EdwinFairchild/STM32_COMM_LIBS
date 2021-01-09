@@ -229,6 +229,88 @@ void CL_delay_init() //supports General Purpose TImers 2,3,4,
 	
 #endif // End USING_F1
 
+
+//***************************************************************
+//						F4 related defines / macros / functions
+//***************************************************************
+//		NOTES:
+//		APB1 Timer clocks run at 90MHz max when the system clock is set to 180MHz
+//		so the delay function uses 90MHz in its calculations 
+
+#ifdef CL_USING_F4 
+#ifdef CL_DELAY_USE_TIM2
+#define TIMER TIM2
+#define enableTIMER()  (RCC->APB1ENR |= (RCC_APB1ENR_TIM2EN))
+#define enableIRQ()		(NVIC_EnableIRQ(TIM2_IRQn))
+#endif
+
+#ifdef CL_DELAY_USE_TIM3
+#define TIMER TIM3
+#define enableTIMER()  (RCC->APB1ENR1 |= RCC_APB1ENR1_TIM3EN)
+#define enableIRQ()		(NVIC_EnableIRQ(TIM3_IRQn))
+#endif
+  
+#ifdef CL_DELAY_USE_TIM4
+#define TIMER TIM4
+#define enableTIMER()	(RCC->APB1ENR1 |= RCC_APB1ENR1_TIM4EN)
+#define enableIRQ()		(NVIC_EnableIRQ(TIM4_IRQn))
+#endif
+	
+//***************************************************************
+//						Init functions
+//***************************************************************
+#ifdef CL_delay_USE_LL
+void CL_delay_init() //supports General Purpose TImers 2,3,4,
+{
+	enableTIMER();
+	enableIRQ();
+			
+	LL_TIM_InitTypeDef myTIM; 
+	LL_TIM_StructInit(&myTIM);
+	
+#ifdef CL_DELAY_US_ENABLE
+	
+	myTIM.Autoreload  = 10;
+	myTIM.Prescaler = 17;
+	
+#else
+
+	
+	myTIM.Prescaler = 90; //90MHz divided by 90 is 1MHz (why 90? see notes on F4 seection )
+	myTIM.Autoreload  = 1000; //then 1MHz divided by 1000 is 1000 
+	//and thus each timer tick is 1ms
+#endif
+	//	( (SystemCoreClock/1000000) / 4 )	* 2 
+	//	according to clock tree settings this should give 90 when
+	// system clock is 180
+	
+	LL_TIM_SetUpdateSource(TIMER, LL_TIM_UPDATESOURCE_COUNTER); //update even will only be set by over/undeflow of counter
+	LL_TIM_EnableIT_UPDATE(TIMER);
+	//	LL_TIM_GenerateEvent_UPDATE(TIMER);	
+	LL_TIM_Init(TIMER, &myTIM);
+}	
+
+#else //if not using LL
+
+void CL_delay_init() //supports General Purpose TImers 2,3,4,
+{
+	enableTIMER();
+	enableIRQ();
+#ifdef CL_DELAY_US_ENABLE //change prescaler for micro second delay	
+	//@@@@@@@@ NEED calculaiting 
+	TIMER->ARR = 10;
+	TIMER->PSC = 17;
+#else
+	TIMER->PSC = (SystemCoreClock / 1000000);
+	TIMER->ARR = 1000;
+#endif
+	TIMER->CR1 |= TIM_CR1_URS;
+	TIMER->DIER |= TIM_DIER_UIE;
+	TIMER->EGR |= TIM_EGR_UG;  
+}	
+#endif //CL_delay_USE_LL
+
+#endif //End CL_USING_G4
 //***************************************************************
 //						Universal Delay functions
 //***************************************************************
@@ -251,10 +333,13 @@ void CL_delay_init() //supports General Purpose TImers 2,3,4,
 
 	void delayMS(uint32_t ms)
 	{
-		TIMER->CR1 |= TIM_CR1_CEN;
+		TIMER->CR1 |= TIM_CR1_CEN; //turn on the timer to start delay counter
 		CL_delayTicks = 0;
 		while (CL_delayTicks < (ms)) ;
-		TIMER->CR1 &= ~(TIM_CR1_CEN);
+		/*	after delay count is reached turn the timer off
+			so that you're not interrupting the MCU uneccessarily 
+		*/
+		TIMER->CR1 &= ~(TIM_CR1_CEN); 
 	}
 
 #endif // end CL_DELAY_US_ENABLE

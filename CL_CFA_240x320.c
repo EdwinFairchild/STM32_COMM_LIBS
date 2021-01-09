@@ -851,3 +851,45 @@ void SPI_sendData(uint8_t data)
 	// Deselect the LCD controller
 	SET_CS;
 }
+
+void uGui_set_pixel(uint16_t x, uint16_t y, uint32_t color)
+{
+	
+	// Select the LCD controller
+		CLR_CS;
+	//CASET (2Ah): Column Address Set
+	// * The value of XS [15:0] and XE [15:0] are referred when RAMWR
+	//   command comes.
+	// * Each value represents one column line in the Frame Memory.
+	// * XS [15:0] always must be equal to or less than XE [15:0]
+	SPI_sendCommand(ST7789_2A_CASET);    //Column address set
+	//Write the parameters for the "column address set" command
+	SPI_sendData(x >> 8);   	 //Start MSB = XS[15:8]
+	SPI_sendData(x & 0x00FF);    //Start LSB = XS[ 7:0]
+	SPI_sendData(0);   		  //End MSB   = XE[15:8] 240-1
+	SPI_sendData(240);   		  //End LSB   = XE[ 7:0]
+	//Write the "row address set" command to the LCD
+	//RASET (2Bh): Row Address Set
+	// * The value of YS [15:0] and YE [15:0] are referred when RAMWR
+	//   command comes.
+	// * Each value represents one row line in the Frame Memory.
+	// * YS [15:0] always must be equal to or less than YE [15:0]
+	SPI_sendCommand(ST7789_2B_RASET);    //Row address set
+
+	//Use 1st quadrant coordinates: 0,0 is lower left, 239,319 is upper right.
+	y = 319 - y;
+	//Write the parameters for the "row address set" command
+	SPI_sendData(y >> 8);   	 //Start MSB = YS[15:8]
+	SPI_sendData(y & 0x00FF);    //Start LSB = YS[ 7:0]
+	SPI_sendData(0x01);   		  //End MSB   = YE[15:8] 320-1
+	SPI_sendData(0x3F);   		  //End LSB   = YE[ 7:0]
+	//Write the "write data" command to the LCD
+	//RAMWR (2Ch): Memory Write
+	SPI_sendCommand(ST7789_2C_RAMWR);    //write data
+	//Write the single pixel's worth of data
+	SPI_sendData(color & 0x0000FF);    //Blue
+	SPI_sendData((color & 0x00FF00)>>8);    //Green
+	SPI_sendData((color & 0xFF0000)>>16);    //Red
+	// Deselect the LCD controller
+	SET_CS;
+}

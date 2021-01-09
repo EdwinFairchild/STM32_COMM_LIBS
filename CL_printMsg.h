@@ -50,10 +50,11 @@
 
 #endif
 #ifdef CL_USING_L0
-
 #include "stm32l0xx.h"
+#endif
 
-
+#ifdef CL_USING_F4
+#include "stm32f4xx.h"
 #endif
 #ifndef CL_USING_L0
 typedef struct //user structure to set custom uart

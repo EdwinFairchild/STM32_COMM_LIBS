@@ -49,3 +49,20 @@ void CL_setSysClockTo72(void);
 void setClockTo32Mhz(void);
 #endif
 
+
+/***********************| STM32F429Z1 |*************************/
+#ifdef CL_USING_F4
+
+#include "stm32f4xx.h"
+
+#ifdef CL_SYSTEMCLOCKUPDATE_USE_LL
+#include <stm32f4xx_ll_rcc.h>
+#include <stm32f4xx_ll_system.h>
+#include <stm32f4xx_ll_pwr.h>
+#include <stm32f4xx_ll_utils.h>
+#include <stm32f4xx_ll_cortex.h>
+#endif
+
+//G4 specific functions
+void setClockTo180(void);
+#endif
