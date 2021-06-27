@@ -20,7 +20,6 @@
 //#define CL_USING_G0 
 //#define CL_USING_G4 
 #define CL_USING_F4
-#define USING_F446_NUCELO
 //#define CL_USING_F7
 	
 
@@ -56,7 +55,7 @@
 /***********  Select which timer to use by uncommenting it */
 #define CL_DELAY_USE_TIM2
 //#define CL_DELAY_USE_TIM3
-//#define CL_DELAY_USE_TIM4
+//#define CL_DELAY_USE_` TIM4
 
 /*********** Select uses LL to init timer */
 #define CL_delay_USE_LL
@@ -74,4 +73,7 @@
 
 //#define MESSAGE_MAX 50
 
+
+/*********************|      CL_printMsg.h SETTINGS        |************************/
+#define USING_F446_NUCELO
 #endif

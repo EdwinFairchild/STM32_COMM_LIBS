@@ -8,7 +8,7 @@ char BACKSPACE = 127;
 
 
 extern void CL_printMsg(char *msg, ...);
-void registerCommand(char *cmd, char delimeter, cmd_handler handler, char *help)
+static void registerCommand(char *cmd, char delimeter, cmd_handler handler, char *help)
 {
     //register a command at index matching current number of commands
     //this helps keep track of where to put the next registered command
@@ -20,16 +20,14 @@ void registerCommand(char *cmd, char delimeter, cmd_handler handler, char *help)
     CURRENT_NUM_OF_COMMANDS++;
 
 }
-void charReceived(char data)
-{
-
-
-}
 void CL_cli_init(CL_cli_type *cli)
 {
 //since structs 
 	cli->registerCommand = registerCommand;
+	cli->parseCommand = parseCMD;
+	cli->parseChar = parseChar;
 	cli->msgPtr = 0;
+	//CL_printMsg("---CLI Initizalized---\n %s", cli->prompt);
 
 }
 void parseChar(CL_cli_type *cli)
@@ -48,21 +46,16 @@ void parseChar(CL_cli_type *cli)
 			 *	
 			 */
  
-		if(cli->charReceived == cli->delimeter) 
+		if (cli->charReceived == cli->delimeter || cli->charReceived == '\n') 
 		{	
-				
-			
-				
-			
+						
 			//reset temp pointer countr
 			cli->msgPtr = 0;    
 				
 			//this flag is used to let the application know we have a command to parse
 			//do not parse anything in ISR
 			cli->parsePending = true; 
-				
-				
-				
+								
 		}	
 		//if backspace is received the user wants to delete previous char receveid
 		//so decrement the pointer so it points to previous char and set that char to null
@@ -170,6 +163,7 @@ void parseCMD(CL_cli_type *cli)
     
             //call the command handler for the specific command that was matched
 	        //pass the number of tokens found as well as a list of the tokens
+			CL_printMsg("\r\n");
             cmd_list[i].cmdHandler(argumentCount,tokens_found);
 	        CL_printMsg("%s", cli->prompt);
 	        
@@ -203,21 +197,38 @@ void parseCMD(CL_cli_type *cli)
 	//return pointer to handler function
 
 
-}//--------------------------------------------------
+}
 
-//not in use
-int hash(char *cmd)
+
+
+void printRegister(uint32_t regVal)
 {
-	/* really basic has just for the sake of simplicity 
-	 * i dont expect hundreds of commands to be added at which point
-	 * a better hash would be warranted*/
-	uint8_t len = strlen(cmd);	
-	int num = 0;
-		
-	//add up the ascii values of the command 
-	for (int i = 0; i < len; i++)
-	{
-		num += cmd[i];
-		
+	CL_printMsg("Register Value: 0x%X\n\r", regVal);
+	for (int i = 31; i >=10; i--)
+	{	
+		CL_printMsg("| %d ",i);
+	
+
 	}
+	for (int i = 9; i >= 0; i--)
+	{	
+		CL_printMsg("|  %d ", i);
+	
+
+	}
+
+	CL_printMsg("\n\r");
+	for(int i = 0 ; i < 160 ; i++)
+		CL_printMsg("-");
+
+	CL_printMsg("\n\r");
+	for (int i = 31; i >= 0; i--)
+	{	
+	
+		((regVal & (1 << i)) ? CL_printMsg("|  X ") : CL_printMsg("|    "));
+
+	}
+	CL_printMsg("\n\r");
+
+
 }

@@ -45,13 +45,19 @@ void NRF_cmd_read_multi_byte_reg(uint8_t reg, uint8_t numBytes, uint8_t *buff)//
 uint8_t  NRF_cmd_read_single_byte_reg(uint8_t reg)
 {
 	NRF.NRF_CSN_LOW();
-	
+	//delayMS(1);
 	NRF.spiSend(reg);    // send register name
+	//delayMS(1);
 	NRFSTATUS = NRF.spiRead();
+	//delayMS(1);
 	NRF.spiSend(DUMMYBYTE);
-   
+	//delayMS(1);
+   uint8_t temp = NRF.spiRead();
+
 	NRF.NRF_CSN_HIGH();
-	return NRF.spiRead();
+
+	
+	return temp;
 }
 uint8_t  NRF_cmd_read_dynamic_pl_width(void)
 {
@@ -228,7 +234,7 @@ void NRF_init(CL_nrf24l01p_init_type *nrf_type)
 	
 	//common configurations	
 	NRF_cmd_modify_reg(NRF_CONFIG, PWR_UP, 1);    // turn on 
-	//delayMS(100);
+	delayMS(300);
 	NRF_cmd_modify_reg(NRF_CONFIG, CRCO, nrf_type->set_crc_scheme);      //set CRC scheme
 	NRF_cmd_modify_reg(NRF_CONFIG, EN_CRC, nrf_type->set_enable_crc);    //turn on CRC	
 	NRF_cmd_modify_reg(NRF_CONFIG, MASK_TX_DS, !(nrf_type->set_enable_tx_ds_interrupt));    //dsiable TX_DS interrupt on IRQ pin

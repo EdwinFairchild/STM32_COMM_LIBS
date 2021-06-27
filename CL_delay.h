@@ -69,6 +69,21 @@
 #include <stm32f4xx_ll_bus.h>
 #include <stm32f4xx_ll_tim.h>
 #endif
+#endif//-------------------------------------- END of USING F4
+
+
+#ifdef CL_USING_F7 //--------------------------  USING f7
+
+#include "stm32f7xx.h"
+
+
+
+#ifdef CL_delay_USE_LL
+#include <stm32f7xx_ll_rcc.h>
+#include <stm32f7xx_ll_system.h>
+#include <stm32f7xx_ll_bus.h>
+#include <stm32f7xx_ll_tim.h>
+#endif
 
 #endif //-------------------------------------- END of USING L0
 

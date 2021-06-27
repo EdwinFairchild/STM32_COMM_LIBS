@@ -43,12 +43,16 @@
 
 #endif
 
+
+
 #ifdef CL_USING_G4
 
 	#include "stm32g431xx.h"
 
 
 #endif
+
+
 #ifdef CL_USING_L0
 #include "stm32l0xx.h"
 #endif
@@ -56,6 +60,31 @@
 #ifdef CL_USING_F4
 #include "stm32f4xx.h"
 #endif
+
+#ifdef CL_USING_F7
+#include "stm32f7xx.h"
+
+#include <stdint.h>
+#include "string.h"
+#include "stdlib.h"
+#include "stdio.h"
+#include "stdarg.h"
+#include "stdbool.h"
+
+
+#define MODE_BIT_0_CRL	(4*config.TX_pin)
+#define MODE_BIT_1_CRL 	((4*config.TX_pin)+1)
+#define MODE_BIT_0_CRH	(4*(config.TX_pin-8))
+#define MODE_BIT_1_CRH 	((4*(config.TX_pin-8))+1)
+
+
+#define CNF_BIT_0_CRL 	((4*config.TX_pin)+2)
+#define CNF_BIT_1_CRL	((4*config.TX_pin)+3)
+#define CNF_BIT_0_CRH 	((4*(config.TX_pin-8))+2)
+#define CNF_BIT_1_CRH	((4*(config.TX_pin-8))+3)
+
+#endif
+
 #ifndef CL_USING_L0
 typedef struct //user structure to set custom uart
 {

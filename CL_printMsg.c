@@ -56,13 +56,15 @@ void CL_printMsg_init_Default(bool fullDuplex)
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN; //gpioa
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN; //uart1
 	
-	GPIOA->CRH &= GPIO_CRH_CNF9;
-	GPIOA->CRH |= GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9;
+	GPIOA->CRH &= GPIO_CRH_CNF9 | GPIO_CRH_CNF10;
+	GPIOA->CRH |= GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9 | GPIO_CRH_CNF10_1 | GPIO_CRH_MODE10; 
+	;
 	
 	//0x271 = 115200   0x1d4c = 9600
 	USART1->BRR = 0x271; //0x1d4C;    //ill figure out how to get clock freq. so that this doesnt have to be hard coded
-	USART1->CR1 |=  USART_CR1_TE;
+	USART1->CR1 |=  USART_CR1_TE | USART_CR1_RE;
 	USART1->CR1 |= USART_CR1_UE;
+
 }
 void CL_printMsg(char *msg, ...)
 {	
@@ -176,7 +178,7 @@ void CL_printMsg_init_Default(bool fullDuplex)
 	USART2->BRR = 0xD05;// 320000 / 96; 
 	;    //160000 / 96;
 	// Enable RX_NE interrupt and TXE interrupt, enable UART, RECEIVE , TRANSMIT COMPLETE
-	USART2->CR1 = USART_CR1_TE | USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE	| USART_CR1_TCIE;
+	USART2->CR1 = USART_CR1_TE | USART_CR1_UE | USART_CR1_TE | USART_CR1_RXNEIE | USART_CR1_RE	| USART_CR1_TCIE;
 }
 void CL_printMsg(char *msg, ...)
 {	
@@ -200,6 +202,10 @@ void CL_printMsg(char *msg, ...)
 #include <stm32f4xx_ll_gpio.h>
 #include <stm32f4xx_ll_usart.h>
 #include <stm32f4xx_ll_bus.h>
+
+
+
+
 void CL_printMsg_init_Default(bool fullDuplex)
 {
 
@@ -208,29 +214,270 @@ void CL_printMsg_init_Default(bool fullDuplex)
 	LL_GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 
 	/* Peripheral clock enable */
-	LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
-
+#ifdef USING_F446_NUCELO
+	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART2);
 	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
 	/**USART1 GPIO Configuration  
 	PA9   ------> USART1_TX
 	PA10   ------> USART1_RX 
 	*/
-	LL_GPIO_StructInit(&GPIO_InitStruct);
-	GPIO_InitStruct.Pin = LL_GPIO_PIN_9;
+	if (fullDuplex)
+	{
+		/* USER CODE BEGIN USART2_Init 0 */
+
+	/* USER CODE END USART2_Init 0 */
+
+		LL_USART_InitTypeDef USART_InitStruct = { 0 };
+
+		LL_GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+
+		/* Peripheral clock enable */
+		LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART2);
+  
+		LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+		/**USART2 GPIO Configuration  
+		PA2   ------> USART2_TX
+		PA3   ------> USART2_RX 
+		*/
+		GPIO_InitStruct.Pin = LL_GPIO_PIN_2 | LL_GPIO_PIN_3;
+		GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+		GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+		GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+		GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
+		GPIO_InitStruct.Alternate = LL_GPIO_AF_7;
+		LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+		/* USART2 interrupt Init */
+	//	NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+		NVIC_EnableIRQ(USART2_IRQn);
+
+		/* USER CODE BEGIN USART2_Init 1 */
+
+		/* USER CODE END USART2_Init 1 */
+		USART_InitStruct.BaudRate = 115200;
+		USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
+		USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
+		USART_InitStruct.Parity = LL_USART_PARITY_NONE;
+		USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX_RX;
+		USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
+		USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
+		LL_USART_Init(USART2, &USART_InitStruct);
+		LL_USART_ConfigAsyncMode(USART2);
+
+		//BRR = APB1_Freq / (16* Desired_baud) 
+		//then fractional part gets  multiplied by 16 and apended to
+		//ineger result of first part
+		LL_USART_EnableIT_RXNE(USART2);
+		LL_USART_SetBaudRate(USART2, 45000000, 16, 115200);
+		//USART2->BRR = 0x18F;
+		LL_USART_Enable(USART2);
+		/* USER CODE BEGIN USART2_Init 2 */
+
+		/* USER CODE END USART2_Init 2 */
+	}
+	else
+	{
+		/* USER CODE BEGIN USART2_Init 0 */
+
+	/* USER CODE END USART2_Init 0 */
+
+		LL_USART_InitTypeDef USART_InitStruct = { 0 };
+
+		LL_GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+
+		/* Peripheral clock enable */
+		LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART2);
+  
+		LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+		/**USART2 GPIO Configuration  
+		PA2   ------> USART2_TX
+		PA3   ------> USART2_RX 
+		*/
+		GPIO_InitStruct.Pin = LL_GPIO_PIN_2 ;
+		GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+		GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+		GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+		GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
+		GPIO_InitStruct.Alternate = LL_GPIO_AF_7;
+		LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+		/* USART2 interrupt Init */
+		NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+		NVIC_EnableIRQ(USART2_IRQn);
+
+		/* USER CODE BEGIN USART2_Init 1 */
+
+		/* USER CODE END USART2_Init 1 */
+		USART_InitStruct.BaudRate = 115200;
+		USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
+		USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
+		USART_InitStruct.Parity = LL_USART_PARITY_NONE;
+		USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX;
+		USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
+		USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
+		LL_USART_Init(USART2, &USART_InitStruct);
+		LL_USART_ConfigAsyncMode(USART2);
+		LL_USART_Enable(USART2);
+		/* USER CODE BEGIN USART2_Init 2 */
+
+		/* USER CODE END USART2_Init 2 */
+	}
+
+#else
+	LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
+	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+	/**USART1 GPIO Configuration  
+	PA9   ------> USART1_TX
+	PA10   ------> USART1_RX 
+	*/
+	if (fullDuplex)
+	{
+		//enable GPIOA clock and configure  for USART1 : [PA-9 TX] [PA-10 RX]
+		LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+	
+		LL_GPIO_InitTypeDef usartGpio;
+		LL_GPIO_StructInit(&usartGpio);
+		usartGpio.Pin  = LL_GPIO_PIN_9 | LL_GPIO_PIN_10;
+		usartGpio.Mode = LL_GPIO_MODE_ALTERNATE;
+		usartGpio.Alternate = LL_GPIO_AF_7;
+		LL_GPIO_Init(GPIOA, &usartGpio);
+	
+	
+		//enable USART1 clock
+		LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
+	
+		//init usart peripheral
+		LL_USART_InitTypeDef cli_uart_1;
+		LL_USART_StructInit(&cli_uart_1);
+		cli_uart_1.BaudRate = 115200;
+		LL_USART_Init(USART1, &cli_uart_1);
+		//LL_USART_ConfigAsyncMode(USART1);
+		USART1->BRR = 0x30D;  //precalculated for mcu runing at 180MHz
+		LL_USART_Enable(USART1);
+	
+		//enable interrupts
+		LL_USART_EnableIT_RXNE(USART1);
+		NVIC_EnableIRQ(USART1_IRQn);
+	}
+	else
+	{
+		LL_GPIO_StructInit(&GPIO_InitStruct);
+		GPIO_InitStruct.Pin = LL_GPIO_PIN_9;
+		GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+		GPIO_InitStruct.Alternate = LL_GPIO_AF_7;
+		LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+		/* USER CODE BEGIN USART1_Init 1 */
+
+		/* USER CODE END USART1_Init 1 */
+		LL_USART_StructInit(&USART_InitStruct);
+		USART_InitStruct.BaudRate = 115200;
+		USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX;
+		LL_USART_Init(USART1, &USART_InitStruct);
+		LL_USART_ConfigAsyncMode(USART1);
+		USART1->BRR = 0x30D;  //precalculated for mcu runing at 180MHz
+		LL_USART_Enable(USART1);
+	}
+
+
+#endif
+	
+
+}//--------------------------------------------------------------------------------
+void CL_printMsg(char *msg, ...)
+{	
+	char buff[150];	
+	va_list args;
+	va_start(args, msg);
+	vsprintf(buff, msg, args);
+
+
+#ifdef USING_F446_NUCELO 
+	for (int i = 0; i < strlen(buff); i++)
+	{
+		
+		USART2->DR = buff[i];
+		while (!(USART2->SR & USART_SR_TXE)) ;
+	}		
+	while (!(USART2->SR & USART_SR_TC)) ;		
+#else
+
+
+	for (int i = 0; i < strlen(buff); i++)
+	{
+		
+		USART1->DR = buff[i];
+		while (!(USART1->SR & USART_SR_TXE)) ;
+	}		
+	while (!(USART1->SR & USART_SR_TC)) ;		
+#endif		
+
+
+}
+
+
+
+
+#endif
+
+
+#ifdef CL_USING_F7
+#include <stm32f7xx_ll_gpio.h>
+#include <stm32f7xx_ll_usart.h>
+#include <stm32f7xx_ll_bus.h>
+
+void CL_printMsg_init_Default(bool fullDuplex)
+{
+
+
+	/* USER CODE BEGIN USART3_Init 0 */
+
+	/* USER CODE END USART3_Init 0 */
+
+	LL_USART_InitTypeDef USART_InitStruct = { 0 };
+
+	LL_GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+
+	/* Peripheral clock enable */
+	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART3);
+  
+	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
+	/**USART3 GPIO Configuration  
+	PB10   ------> USART3_TX
+	PB11   ------> USART3_RX 
+	*/
+	GPIO_InitStruct.Pin = LL_GPIO_PIN_10;
 	GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
 	GPIO_InitStruct.Alternate = LL_GPIO_AF_7;
-	LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-	/* USER CODE BEGIN USART1_Init 1 */
+	GPIO_InitStruct.Pin = LL_GPIO_PIN_11;
+	GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+	GPIO_InitStruct.Alternate = LL_GPIO_AF_7;
+	LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-	/* USER CODE END USART1_Init 1 */
-	LL_USART_StructInit(&USART_InitStruct);
+	/* USER CODE BEGIN USART3_Init 1 */
+
+	/* USER CODE END USART3_Init 1 */
 	USART_InitStruct.BaudRate = 115200;
-	USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX;
-	LL_USART_Init(USART1, &USART_InitStruct);
-	LL_USART_ConfigAsyncMode(USART1);
-	USART1->BRR = 0x30D;
-	LL_USART_Enable(USART1);
+	USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
+	USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
+	USART_InitStruct.Parity = LL_USART_PARITY_NONE;
+	USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX_RX;
+	USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
+	USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
+	LL_USART_Init(USART3, &USART_InitStruct);
+	LL_USART_ConfigAsyncMode(USART3);
+	LL_USART_Enable(USART3);
+	/* USER CODE BEGIN USART3_Init 2 */
+
+	/* USER CODE END USART3_Init 2 */
 }//--------------------------------------------------------------------------------
 void CL_printMsg(char *msg, ...)
 {	
@@ -242,10 +489,10 @@ void CL_printMsg(char *msg, ...)
 	for (int i = 0; i < strlen(buff); i++)
 	{
 		
-		USART1->DR = buff[i];
-		while (!(USART1->SR & USART_SR_TXE)) ;
+		USART2->TDR = buff[i];
+		while (!(USART2->ISR & USART_ISR_TXE)) ;
 	}		
-	while (!(USART1->SR & USART_SR_TC)) ;		
+	while (!(USART2->ISR & USART_ISR_TC)) ;		
 		
 }
 #endif
